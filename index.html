@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <style>
+        body{
+            text-align: center;
+            background-color: #ccc;
+            border: 1px solid black;
+            border-radius: 5px;
+            margin: 10px;
+            padding: 10px;
+            max-width: 40%;
+            max-height: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 50px;
+        }
+    </style>
+    <main>
+    <h1>messaging</h1>
+    <form>
+    <input type="text" name="name" id="name" placeholder="Enter your name"><br>
+    <input type="text" name="room" id="room" placeholder="Enter room number"><br>
+    <button type="button" onclick="JoinRoom()">Join</button>
+    <button onclick="LeaveRoom()">Leave</button><br>
+    <ul id="joinlist">
+    </ul>
+    <input type="text" name="message" id="message" placeholder="Enter your message" >
+    <button type="button" onclick="sendMessage()">Send</button>
+    <ul id="messagelist">
+    </ul>
+    </form> 
+</main> 
+    <script>
+        let socket;
+        const JoinRoom=()=>{
+            var joinlist=document.getElementById('joinlist');
+            var name=document.getElementById('name');
+            var room=document.getElementById('room');
+            var messagelist=document.getElementById('messagelist');
+
+            if (name.value.length > 0 && room.value.length > 0) {
+
+             socket=new WebSocket('ws://192.168.29.30:3400');
+
+             socket.onopen=()=>{
+             socket.send(JSON.stringify({type:'join',name:name.value,room:room.value}))
+        }
+        socket.onmessage=(e)=>{
+            let data = JSON.parse(e.data);
+
+            if(data.type=='notify')
+            {
+                let li=document.createElement('li')
+                li.textContent=data.message
+                joinlist.appendChild(li);
+                console.log(data.message)
+            }
+            else if(data.type=='message')
+            {
+                let li=document.createElement('li')
+                li.textContent=data.username+':'+data.message;
+                messagelist.appendChild(li);
+                console.log(data.message)
+            }
+        }
+    }
+            else{
+                alert("enter name and room number");
+            }
+            
+        }
+       const sendMessage=()=>{
+          let message=document.getElementById('message');
+          socket.send(JSON.stringify({type:'message',message:message.value}))
+       }
+       const LeaveRoom=()=>{
+           if(socket&&socket.readyState==WebSocket.OPEN)
+           {
+           socket.send(JSON.stringify({type:'leave'}))
+           socket.close()
+           window.location.reload()
+       }
+    }
+        
+    </script>
+</body>
+</html>
